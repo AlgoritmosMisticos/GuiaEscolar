@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Buscar Maestro</title>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600&family=Syne:wght@700&display=swap" rel="stylesheet">
+<style>
+:root{--fruit:#D97352;--opal:#6850AD;--blood:#6B0733;--thorn:#2D1036;--bg:#FBF1EC;--ink:#2D1036;--head:#6B0733;--card:#fff;--star:#6850AD;--muted:#6a4673;--soft:#FBE3D8;color-scheme:light}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#2D1036;--ink:#FBE3D8;--head:#D97352;--card:#3b1c4b;--star:#D97352;--muted:#c9a9c9;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#2D1036;--ink:#FBE3D8;--head:#D97352;--card:#3b1c4b;--star:#D97352;--muted:#c9a9c9;color-scheme:dark}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0}
+html{background:var(--blood)}
+body{font-family:Montserrat,system-ui,sans-serif;background:var(--bg);color:var(--ink);font-size:15px;line-height:1.45;overflow:hidden}
+h1,h2,h3{font-family:Syne,Montserrat,system-ui,sans-serif;margin:0 0 14px;color:var(--head)}
+h2{font-size:26px}h3{font-size:19px;margin-top:24px}
+button,input,select,textarea{font:inherit;color:inherit}
+input,select,textarea{font-size:16px}
+button{cursor:pointer}
+.mut{color:var(--muted)}
+:focus-visible{outline:3px solid var(--fruit);outline-offset:2px}
+.app{position:fixed;inset:0;display:grid;grid-template-columns:80px minmax(0,1fr);grid-template-rows:calc(60px + env(safe-area-inset-top,0px)) minmax(0,1fr)}
+.logo{background:var(--fruit);border:0;display:flex;align-items:center;justify-content:center;gap:10px;padding:env(safe-area-inset-top,0px) 0 0;color:var(--thorn);font-family:Syne,sans-serif;font-size:17px}
+.logo svg{width:36px;height:36px;flex:none}
+.bn{display:none}
+.top{background:var(--opal);display:flex;gap:10px;align-items:center;padding:env(safe-area-inset-top,0px) 12px 0;min-width:0}
+.top input{flex:1;min-width:0;max-width:560px;border-radius:30px;border:0;background:var(--thorn);color:var(--soft);padding:10px 18px}
+.top input::placeholder{color:#c9b8f0}
+.fbtn{background:var(--fruit);border:0;color:var(--thorn);font-weight:600;border-radius:30px;padding:10px 16px;margin-left:auto}
+.side{background:var(--blood);display:flex;flex-direction:column;justify-content:space-evenly;padding:10px 6px calc(10px + env(safe-area-inset-bottom,0px));overflow-y:auto}
+.side button{background:none;border:0;color:var(--soft);padding:16px 2px;border-radius:18px;font-size:12px;overflow-wrap:anywhere}
+.side button.on{background:var(--fruit);color:var(--thorn);font-weight:600}
+main{overflow:auto;padding:20px 16px calc(40px + env(safe-area-inset-bottom,0px))}
+.wrap{max-width:860px;margin:0 auto}
+.card{background:var(--card);border:1px solid var(--star);border-radius:22px;padding:16px;margin-bottom:14px}
+.post{display:grid;grid-template-columns:46px minmax(0,1fr);gap:12px}
+.av{width:44px;height:44px;border-radius:50%;background:var(--opal);border:3px solid var(--fruit);display:grid;place-items:center;color:#fff;font-size:18px}
+.tch{font-weight:600}
+.stars{color:var(--star);letter-spacing:2px}
+.tag{display:inline-block;background:var(--opal);color:#fff;border-radius:20px;padding:1px 12px;font-size:12px}
+.post p{margin:6px 0 10px;white-space:pre-wrap;overflow-wrap:anywhere}
+.btn{background:var(--fruit);color:var(--thorn);border:0;border-radius:30px;padding:12px 22px;font-weight:600}
+.btn.ghost{background:transparent;border:1px solid var(--star);color:var(--ink)}
+.btn.sm{padding:6px 14px;font-size:13px}
+.grid9{display:grid;grid-template-columns:repeat(auto-fill,minmax(64px,1fr));gap:10px;max-width:560px}
+.num{font-family:Syne,sans-serif;font-size:30px;background:var(--card);border:1px solid var(--star);border-radius:20px;padding:8px 0;color:var(--ink)}
+.num.on,.chipsem.on{background:var(--opal);border-color:var(--opal);color:#fff}
+.chipsem{background:var(--card);border:1px solid var(--star);border-radius:30px;padding:6px 16px;margin:0 6px 8px 0;color:var(--ink)}
+.mat{margin:0 0 16px}
+.chip{display:inline-block;background:var(--card);border:1px solid var(--star);border-radius:18px;padding:8px 14px;margin:6px 8px 0 0;text-align:left;color:var(--ink)}
+.item{display:flex;align-items:center;gap:14px;width:100%;text-align:left;background:var(--card);border:1px solid var(--star);border-radius:24px;padding:16px 20px;margin-bottom:12px;font-family:Syne,sans-serif;font-size:19px;color:var(--ink)}
+.item small{display:block;font-family:Montserrat,sans-serif;font-weight:400;font-size:13px;color:var(--muted)}
+.item.on{background:var(--fruit);border-color:var(--fruit);color:var(--thorn)}
+.item.on small{color:var(--thorn)}
+.item .st{color:var(--opal);font-size:22px}
+.opt{display:block;width:100%;text-align:left;background:var(--card);border:1px solid var(--star);border-radius:24px;padding:24px 22px;margin-bottom:14px;font-family:Syne,sans-serif;font-size:21px;color:var(--ink)}
+.fld{display:block;margin:0 0 16px;font-weight:600}
+.fld input,.fld select,.fld textarea{display:block;width:100%;margin-top:6px;background:var(--card);border:1px solid var(--star);border-radius:16px;padding:11px 14px;font-weight:400}
+.sbtn{background:none;border:0;font-size:32px;color:var(--star);opacity:.3;padding:0 3px}
+.sbtn.on{opacity:1}
+.filt{position:absolute;right:12px;top:calc(66px + env(safe-area-inset-top,0px));z-index:5;width:min(300px,calc(100% - 24px));background:var(--blood);border-radius:22px;padding:16px;color:var(--soft);box-shadow:0 10px 30px rgba(0,0,0,.35)}
+.filt[hidden]{display:none}
+.filt select{width:100%;margin:6px 0 14px;background:var(--thorn);border:0;border-radius:14px;padding:10px;color:var(--soft)}
+.auth{position:fixed;inset:0;overflow:auto;display:grid;place-items:center;padding:20px;background:var(--thorn)}
+.box{width:min(400px,100%);background:var(--blood);border:2px solid var(--opal);border-radius:28px;padding:26px;color:var(--soft)}
+.box h1{font-size:30px;margin-bottom:16px;color:var(--fruit)}
+.box label{display:block;margin-bottom:14px}
+.box input,.box select{display:block;width:100%;margin-top:6px;padding:11px 14px;background:var(--thorn);border:1px solid var(--opal);border-radius:16px;color:var(--soft)}
+.tabs{display:flex;gap:8px;margin-bottom:18px}
+.tabs button{flex:1;background:none;border:1px solid var(--opal);border-radius:30px;padding:8px;color:var(--soft)}
+.tabs button.on{background:var(--fruit);border-color:var(--fruit);color:var(--thorn);font-weight:600}
+.err{color:#ffc2b3;min-height:1.4em;margin:10px 0 0}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(18px + env(safe-area-inset-bottom,0px));background:var(--thorn);color:var(--soft);border:1px solid var(--opal);border-radius:30px;padding:10px 22px;z-index:9}
+@media (min-width:768px){
+ .app{grid-template-columns:230px minmax(0,1fr);grid-template-rows:calc(68px + env(safe-area-inset-top,0px)) minmax(0,1fr)}
+ .bn{display:inline}
+ .top{padding-left:28px;padding-right:28px}
+ .side{padding:16px 14px calc(16px + env(safe-area-inset-bottom,0px))}
+ .side button{font-size:17px;padding:18px 10px}
+ main{padding:36px 44px 56px}
+ .filt{right:28px;top:calc(74px + env(safe-area-inset-top,0px))}
+ h2{font-size:32px}
+}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script>
+const K="buscar_maestro_v1";
+const SCHOOLS=[
+{id:"CUAAD",n:"Centro Universitario de Arte, Arquitectura y Diseño",d:"Artes, arquitectura, diseño gráfico e interiorismo"},
+{id:"CUCBA",n:"Centro Universitario de Ciencias Biológicas y Agropecuarias",d:"Biología, agronomía, veterinaria y medio ambiente"},
+{id:"CUCEA",n:"Centro Universitario de Ciencias Económico Administrativas",d:"Negocios, contaduría, economía, finanzas y turismo"},
+{id:"CUCEI",n:"Centro Universitario de Ciencias Exactas e Ingenierías",d:"Ingenierías, ciencias básicas, matemáticas y computación"},
+{id:"CUCS",n:"Centro Universitario de Ciencias de la Salud",d:"Medicina, enfermería, odontología, psicología y nutrición"},
+{id:"CUCSH",n:"Centro Universitario de Ciencias Sociales y Humanidades",d:"Derecho, historia, filosofía, letras, sociología y relaciones internacionales"},
+{id:"CUGDL",n:"Centro Universitario de Guadalajara",d:"Centro multidisciplinario con oferta flexible y modalidad híbrida"}];
+const CAREERS=[{id:"comp",n:"Ingeniería en Computación"},{id:"inf",n:"Ingeniería Informática"}];
+const PLANS={
+comp:{
+1:["Fundamentos de Programación","Lógica Matemática","Precálculo","Fundamentos de Física","Introducción a la Ingeniería","Ética y Legislación","Análisis de Problemas Globales del Siglo XXI"],
+2:["Programación Estructurada","Matemáticas Discretas","Cálculo Diferencial e Integral","Mecánica","Administración de Proyectos Tecnológicos","Expresión Oral y Escrita"],
+3:["Programación Orientada a Objetos","Álgebra Lineal","Ecuaciones Diferenciales","Circuitos Electrónicos y Electromagnetismo","Sistemas Digitales","Liderazgo y Emprendimiento"],
+4:["Estructura de Datos","Probabilidad y Estadística","Métodos Numéricos","Arquitectura de Computadoras","Fundamentos de Inteligencia Artificial","Administración"],
+5:["Análisis de Algoritmos","Programación para Internet","Interacción Humano Computadora","Sistemas Operativos","Redes de Computadoras","Seminario de Integración: Protocolo"],
+6:["Bases de Datos","Innovación y Tecnología","Programación de Bajo Nivel"],
+7:["Ingeniería de Software","Teoría de la Computación","Laboratorio Abierto: Diseño","Seminario de Integración: Desarrollo"],
+8:["Compiladores","Seguridad de la Información","Laboratorio Abierto: Construcción"],
+9:["Programación Paralela y Concurrente","Seminario de Integración: Comunicación","Laboratorio Abierto: Pruebas"]},
+inf:{
+1:["Fundamentos de Programación","Lógica Matemática","Precálculo","Fundamentos de Física","Inducción a la Ingeniería","Historia de la Tecnología, el Arte y la Sociedad"],
+2:["Programación Estructurada","Matemáticas Discretas","Cálculo Diferencial e Integral","Mecánica","Tecnología y Retos de las Sociedades"],
+3:["Programación Orientada a Objetos","Álgebra Lineal","Ecuaciones Diferenciales","Electromagnetismo","Ingeniería y Sustentabilidad"],
+4:["Estructuras de Datos","Probabilidad y Estadística","Métodos Numéricos","Informática Administrativa","Arquitectura de Computadoras"],
+5:["Ingeniería de Software","Minería de Datos","Fundamentos de Inteligencia Artificial","Innovación Tecnológica y Emprendimiento","Redes de Computadoras","Seminario de Integración: Protocolo"],
+6:["Calidad del Software","Bases de Datos","Algoritmos Metaheurísticos","UA 1 del Módulo Uno","UA 1 del Módulo Dos"],
+7:["Administración de Bases de Datos","Seminario de Integración: Desarrollo","Laboratorio Abierto: Diseño","UA 2 del Módulo Uno","UA 2 del Módulo Dos"],
+8:["Análisis y Visualización de la Información","Sistemas Inteligentes","Laboratorio Abierto: Construcción","UA 3 del Módulo Uno","UA 3 del Módulo Dos"],
+9:["Control de Proyectos","Seminario de Integración: Comunicación","Laboratorio Abierto: Pruebas","Tecnologías de Inteligencia Artificial"]}};
+// Lista de maestros (después vendrá de la base de datos)
+const TEACHERS=[
+{n:"Michel Davalos Boites",m:"Fundamentos de Programación"},
+{n:"Veronica Iliana Cordova Gonzalez",m:"Matemáticas Discretas"},
+{n:"Luis Alberto Muñoz Gomez",m:"Programación Estructurada"},
+{n:"Alma Lucia Pelayo Pelayo",m:"Mecánica"}];
+const ALLM=[...new Set(Object.values(PLANS).flatMap(p=>Object.values(p).flat()))];
+
+let db={users:{},posts:[],session:null};
+try{Object.assign(db,JSON.parse(localStorage.getItem(K))||{})}catch(e){}
+const save=()=>{try{localStorage.setItem(K,JSON.stringify(db))}catch(e){}};
+const st={view:"home",sem:1,school:"CUCEI",career:"comp",q:"",fm:"",fr:0,rate:0};
+const $=s=>document.querySelector(s);
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const me=()=>db.users[db.session];
+const stars=n=>"✦".repeat(n)+"✧".repeat(5-n);
+const plan=()=>st.school==="CUCEI"?PLANS[st.career]:null;
+function avg(name){const r=db.posts.filter(p=>p.type==="c"&&p.teacher===name);return{n:r.length,a:r.length?r.reduce((s,p)=>s+p.rating,0)/r.length:0}}
+function toast(t){const d=document.createElement("div");d.className="toast";d.textContent=t;document.body.appendChild(d);setTimeout(()=>d.remove(),2200)}
+
+function chip(t){const v=avg(t.n);return `<button class="chip" data-act="tch" data-n="${esc(t.n)}">${esc(t.n)}<br><span class="stars">${v.n?"✦ "+v.a.toFixed(1)+" ("+v.n+")":"Sin calificar"}</span></button>`}
+function mat(m,empty){const ts=TEACHERS.filter(t=>t.m===m);if(!ts.length&&!empty)return"";return `<div class="mat"><b>${esc(m)}</b><div>${ts.length?ts.map(chip).join(""):'<span class="mut">Sin maestros registrados</span>'}</div></div>`}
+function card(p,mine){return `<article class="card post"><div class="av">☺</div><div><b>${p.anon?"Anónimo":esc(p.user)}</b> <span class="mut">${esc(p.date)}</span><div class="tch">${esc(p.teacher)}${p.materia?" · "+esc(p.materia):""}</div>${p.type==="c"?`<div class="stars">${stars(p.rating)}</div>`:'<span class="tag">Pregunta</span>'}<p>${esc(p.text)}</p>${mine?`<button class="btn ghost sm" data-act="del" data-id="${p.id}">Eliminar</button>`:""}</div></article>`}
+const noData=()=>`<h2>Sin información</h2><p class="mut">Todavía no hay datos de este centro universitario. Por ahora solo está disponible CUCEI, con Ingeniería en Computación e Ingeniería Informática.</p>`;
+const semChips=P=>`<div>${Object.keys(P).map(n=>`<button class="chipsem ${n==st.sem?"on":""}" data-act="sem" data-n="${n}">Semestre ${n}</button>`).join("")}</div>`;
+const pill=(on,act,id,title,sub)=>`<button class="item ${on?"on":""}" data-act="${act}" data-id="${id}">${on?'<span class="st">✦</span>':""}<span>${title}${sub?`<small>${sub}</small>`:""}</span></button>`;
+
+const views={
+home(){
+ const q=st.q.trim().toLowerCase();
+ const l=db.posts.filter(p=>(!q||(p.teacher+" "+p.materia+" "+p.text).toLowerCase().includes(q))&&(!st.fm||p.materia===st.fm)&&(!st.fr||avg(p.teacher).a>=st.fr));
+ return `<h2>Comentarios</h2>`+(l.length?l.map(p=>card(p)).join(""):`<p class="mut">${db.posts.length?"Ningún comentario coincide con tu búsqueda o filtro.":"Aún no hay comentarios. Entra a Añadir y publica el primero."}</p>`)},
+sem(){
+ const P=plan();if(!P)return noData();
+ const rows=P[st.sem].map(m=>mat(m,false)).join("");
+ return `<h2>Semestre</h2><div class="grid9">${Object.keys(P).map(n=>`<button class="num ${n==st.sem?"on":""}" data-act="sem" data-n="${n}">${n}</button>`).join("")}</div><h3>Maestros del semestre ${st.sem}</h3>${rows||'<p class="mut">Aún no hay maestros registrados en este semestre.</p>'}`},
+mat(){
+ const P=plan();if(!P)return noData();
+ return `<h2>Materia</h2>${semChips(P)}${P[st.sem].map(m=>mat(m,true)).join("")}`},
+car(){
+ if(st.school!=="CUCEI")return `<h2>Carrera</h2><p class="mut">Aún no hay carreras cargadas para ${esc(st.school)}.</p>`;
+ return `<h2>Carrera</h2>${CAREERS.map(c=>pill(c.id===st.career,"career",c.id,c.n)).join("")}<p class="mut">Se irán añadiendo más carreras.</p>`},
+sch(){
+ return `<h2>Centro universitario</h2>${SCHOOLS.map(s=>pill(s.id===st.school,"school",s.id,s.id,esc(s.n)+"<br>"+esc(s.d))).join("")}${st.school!=="CUCEI"?'<p class="mut">Este centro aún no tiene información; por ahora solo CUCEI.</p>':""}`},
+add(){
+ return `<h2>¿Qué quieres publicar?</h2><button class="opt" data-act="go" data-v="addc">Añadir comentario</button><button class="opt" data-act="go" data-v="addq">Preguntar</button>`},
+addc(){
+ st.rate=0;
+ return `<h2>Añadir comentario</h2><label class="fld">Maestro<select id="ft">${TEACHERS.map((t,i)=>`<option value="${i}">${esc(t.n)} — ${esc(t.m)}</option>`).join("")}</select></label><div class="fld">Calificación<div>${[1,2,3,4,5].map(n=>`<button class="sbtn" data-act="star" data-n="${n}" aria-label="${n} de 5">✦</button>`).join("")}</div></div><label class="fld">Tu comentario<textarea id="ftx" rows="5" maxlength="600"></textarea></label><label class="fld"><input id="fan" type="checkbox" checked style="display:inline;width:auto"> Publicar como anónimo</label><button class="btn" data-act="pubc">Publicar</button> <button class="btn ghost" data-act="go" data-v="add">Cancelar</button>`},
+addq(){
+ return `<h2>Preguntar</h2><label class="fld">¿Sobre qué maestro?<input id="ft" list="tl" placeholder="Nombre del maestro"><datalist id="tl">${TEACHERS.map(t=>`<option value="${esc(t.n)}">`).join("")}</datalist></label><label class="fld">Tu pregunta<textarea id="ftx" rows="5" maxlength="600"></textarea></label><label class="fld"><input id="fan" type="checkbox" checked style="display:inline;width:auto"> Publicar como anónimo</label><button class="btn" data-act="pubq">Publicar</button> <button class="btn ghost" data-act="go" data-v="add">Cancelar</button>`},
+prof(){
+ const u=me(),mine=db.posts.filter(p=>p.user===db.session);
+ return `<h2>Mis publicaciones</h2>${mine.length?mine.map(p=>card(p,true)).join(""):'<p class="mut">Todavía no has publicado nada.</p>'}<h3>Información</h3><p><b>Nombre:</b> ${esc(u.name)}<br><b>Carrera:</b> ${esc(CAREERS.find(c=>c.id===st.career).n)}<br><b>Escuela:</b> ${esc(u.school||"Sin elegir")}</p><button class="btn ghost" data-act="logout">Cerrar sesión</button>`}
+};
+
+function render(){
+ const nav=st.view.startsWith("add")?"add":st.view;
+ $("#side").innerHTML=[["sem","Semestre"],["mat","Materia"],["car","Carrera"],["sch",st.school],["add","Añadir"],["prof","Perfil"]].map(([v,l])=>`<button class="${nav===v?"on":""}" data-act="go" data-v="${v}">${l}</button>`).join("");
+ $("#main").innerHTML=`<div class="wrap">${views[st.view]()}</div>`;
+}
+function shell(){
+ $("#root").innerHTML=`<div class="app"><button class="logo" data-act="go" data-v="home" title="Inicio" aria-label="Inicio"><svg viewBox="0 0 40 40"><circle cx="20" cy="20" r="18" fill="#2D1036" stroke="#6850AD" stroke-width="2"/><circle cx="20" cy="15" r="5" fill="none" stroke="#D97352" stroke-width="2"/><path d="M10 31c2-7 18-7 20 0" fill="none" stroke="#D97352" stroke-width="2"/></svg><span class="bn">Buscar Maestro</span></button><div class="top"><input id="q" placeholder="Buscar maestro" aria-label="Buscar maestro"><button class="fbtn" data-act="filt">Filtro</button></div><nav class="side" id="side"></nav><main id="main"></main><div class="filt" id="filt" hidden><label>Materia<select id="fm"><option value="">Todas</option>${ALLM.map(m=>`<option>${esc(m)}</option>`).join("")}</select></label><label>Calificación mínima del maestro<select id="fr"><option value="0">Cualquiera</option>${[1,2,3,4,5].map(n=>`<option value="${n}">${n} ✦ o más</option>`).join("")}</select></label><button class="btn sm" data-act="fclear">Quitar filtros</button></div></div>`;
+ render();
+}
+function auth(mode){
+ $("#root").innerHTML=`<div class="auth"><div class="box"><h1>${mode==="in"?"Inicia sesión":"Crear cuenta"}</h1><div class="tabs"><button class="${mode==="in"?"on":""}" data-act="amode" data-m="in">Inicia sesión</button><button class="${mode==="up"?"on":""}" data-act="amode" data-m="up">Crear cuenta</button></div><label>Nombre de usuario<input id="au" autocomplete="username"></label>${mode==="up"?`<label>Escoger escuela (opcional)<select id="as"><option value="">Sin elegir</option>${SCHOOLS.map(s=>`<option value="${s.id}">${s.id} · ${esc(s.n)}</option>`).join("")}</select></label>`:""}<label>Contraseña<input id="ap" type="password" autocomplete="${mode==="in"?"current-password":"new-password"}"></label><button class="btn" data-act="${mode==="in"?"login":"signup"}">${mode==="in"?"Entrar":"Crear cuenta"}</button><p class="err" id="err" role="alert"></p></div></div>`;
+}
+function enter(){const u=me();st.school=SCHOOLS.some(s=>s.id===u.school)?u.school:"CUCEI";st.view="home";st.q="";st.fm="";st.fr=0;shell()}
+const err=t=>{$("#err").textContent=t};
+function addPost(o){db.posts.unshift(Object.assign({id:Date.now().toString(36)+Math.random().toString(36).slice(2,5),user:db.session,date:new Date().toLocaleDateString("es-MX")},o));save();st.view="home";render();toast("Publicado")}
+
+document.addEventListener("click",e=>{
+ const b=e.target.closest("[data-act]");if(!b)return;
+ const d=b.dataset;
+ switch(d.act){
+ case"amode":auth(d.m);break;
+ case"signup":{
+  const n=$("#au").value.trim(),p=$("#ap").value,k=n.toLowerCase();
+  if(n.length<3)return err("El nombre debe tener al menos 3 caracteres.");
+  if(db.users[k])return err("Ese nombre de usuario ya existe. Elige otro.");
+  if(p.length<4)return err("La contraseña debe tener al menos 4 caracteres.");
+  db.users[k]={name:n,pass:p,school:$("#as").value};db.session=k;save();enter();break}
+ case"login":{
+  const k=$("#au").value.trim().toLowerCase(),u=db.users[k];
+  if(!u||u.pass!==$("#ap").value)return err("Usuario o contraseña incorrectos.");
+  db.session=k;save();enter();break}
+ case"logout":db.session=null;save();auth("in");break;
+ case"go":st.view=d.v;$("#filt").hidden=true;render();$("#main").scrollTop=0;break;
+ case"filt":$("#filt").hidden=!$("#filt").hidden;break;
+ case"fclear":st.fm="";st.fr=0;$("#fm").value="";$("#fr").value="0";st.view="home";render();break;
+ case"sem":st.sem=+d.n;render();break;
+ case"career":st.career=d.id;render();break;
+ case"school":st.school=d.id;render();break;
+ case"tch":st.q=d.n;$("#q").value=d.n;st.view="home";render();break;
+ case"star":st.rate=+d.n;document.querySelectorAll(".sbtn").forEach((s,i)=>s.classList.toggle("on",i<st.rate));break;
+ case"pubc":{
+  const t=TEACHERS[$("#ft").value],tx=$("#ftx").value.trim();
+  if(!st.rate)return toast("Elige una calificación");
+  if(tx.length<3)return toast("Escribe tu comentario");
+  addPost({type:"c",teacher:t.n,materia:t.m,rating:st.rate,text:tx,anon:$("#fan").checked});break}
+ case"pubq":{
+  const n=$("#ft").value.trim(),tx=$("#ftx").value.trim();
+  if(!n)return toast("Escribe el nombre del maestro");
+  if(tx.length<3)return toast("Escribe tu pregunta");
+  const t=TEACHERS.find(x=>x.n.toLowerCase()===n.toLowerCase());
+  addPost({type:"q",teacher:t?t.n:n,materia:t?t.m:"",text:tx,anon:$("#fan").checked});break}
+ case"del":db.posts=db.posts.filter(p=>!(p.id===d.id&&p.user===db.session));save();render();break;
+ }
+});
+document.addEventListener("input",e=>{
+ if(e.target.id==="q"){st.q=e.target.value;st.view="home";render()}
+});
+document.addEventListener("change",e=>{
+ if(e.target.id==="fm"||e.target.id==="fr"){st.fm=$("#fm").value;st.fr=+$("#fr").value;st.view="home";render()}
+});
+document.addEventListener("keydown",e=>{
+ if(e.key==="Enter"&&e.target.closest(".box")){const b=$(".box .btn");if(b)b.click()}
+});
+if(db.session&&me())enter();else auth("in");
+</script>
+</body>
+</html>
