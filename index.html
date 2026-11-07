@@ -134,14 +134,10 @@ inf:{
 8:["Análisis y Visualización de la Información","Sistemas Inteligentes","Laboratorio Abierto: Construcción","UA 3 del Módulo Uno","UA 3 del Módulo Dos"],
 9:["Control de Proyectos","Seminario de Integración: Comunicación","Laboratorio Abierto: Pruebas","Tecnologías de Inteligencia Artificial"]}};
 
-const TEACHERS=[
-{n:"Michel Davalos Boites",m:"Fundamentos de Programación"},
-{n:"Veronica Iliana Cordova Gonzalez",m:"Matemáticas Discretas"},
-{n:"Luis Alberto Muñoz Gomez",m:"Programación Estructurada"},
-{n:"Alma Lucia Pelayo Pelayo",m:"Mecánica"}];
 const ALLM=[...new Set(Object.values(PLANS).flatMap(p=>Object.values(p).flat()))];
 
-let db = { users: {}, posts: [], session: localStorage.getItem("sesion_activa") || null };
+// Añadimos teachers al objeto db
+let db = { users: {}, posts: [], teachers: [], session: localStorage.getItem("sesion_activa") || null };
 const st={view:"home",sem:1,school:"CUCEI",career:"comp",q:"",fm:"",fr:0,rate:0};
 const $=s=>document.querySelector(s);
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
@@ -151,11 +147,13 @@ const plan=()=>st.school==="CUCEI"?PLANS[st.career]:null;
 function avg(name){const r=db.posts.filter(p=>p.type==="c"&&p.teacher===name);return{n:r.length,a:r.length?r.reduce((s,p)=>s+p.rating,0)/r.length:0}}
 function toast(t){const d=document.createElement("div");d.className="toast";d.textContent=t;document.body.appendChild(d);setTimeout(()=>d.remove(),2200)}
 
+// Sincronizar usuarios
 onSnapshot(collection(dbFS, "users"), (snapshot) => {
     snapshot.forEach(doc => { db.users[doc.id] = doc.data(); });
     if(db.session && me() && st.view === "home" && !$("#side")) enter();
 });
 
+// Sincronizar publicaciones
 onSnapshot(collection(dbFS, "posts"), (snapshot) => {
     db.posts = [];
     snapshot.forEach(doc => { db.posts.push({ id: doc.id, ...doc.data() }); });
@@ -163,8 +161,23 @@ onSnapshot(collection(dbFS, "posts"), (snapshot) => {
     if($("#root").querySelector(".app")) render();
 });
 
+// Sincronizar MAESTROS desde Firebase
+onSnapshot(collection(dbFS, "teachers"), (snapshot) => {
+    db.teachers = [];
+    snapshot.forEach(doc => { db.teachers.push({ id: doc.id, ...doc.data() }); });
+    db.teachers.sort((a,b) => a.n.localeCompare(b.n)); // Orden alfabético
+    if($("#root").querySelector(".app")) render();
+});
+
 function chip(t){const v=avg(t.n);return `<button class="chip" data-act="tch" data-n="${esc(t.n)}">${esc(t.n)}<br><span class="stars">${v.n?"✦ "+v.a.toFixed(1)+" ("+v.n+")":"Sin calificar"}</span></button>`}
-function mat(m,empty){const ts=TEACHERS.filter(t=>t.m===m);if(!ts.length&&!empty)return"";return `<div class="mat"><b>${esc(m)}</b><div>${ts.length?ts.map(chip).join(""):'<span class="mut">Sin maestros registrados</span>'}</div></div>`}
+
+// Modificamos mat() para leer de db.teachers
+function mat(m,empty){
+    const ts=db.teachers.filter(t=>t.m===m);
+    if(!ts.length&&!empty)return"";
+    return `<div class="mat"><b>${esc(m)}</b><div>${ts.length?ts.map(chip).join(""):'<span class="mut">Sin maestros registrados</span>'}</div></div>`
+}
+
 function card(p,mine){return `<article class="card post"><div class="av">☺</div><div><b>${p.anon?"Anónimo":esc(p.user)}</b> <span class="mut">${esc(p.date)}</span><div class="tch">${esc(p.teacher)}${p.materia?" · "+esc(p.materia):""}</div>${p.type==="c"?`<div class="stars">${stars(p.rating)}</div>`:'<span class="tag">Pregunta</span>'}<p>${esc(p.text)}</p>${mine?`<button class="btn ghost sm" data-act="del" data-id="${p.id}">Eliminar</button>`:""}</div></article>`}
 const noData=()=>`<h2>Sin información</h2><p class="mut">Todavía no hay datos de este centro universitario. Por ahora solo está disponible CUCEI, con Ingeniería en Computación e Ingeniería Informática.</p>`;
 const semChips=P=>`<div>${Object.keys(P).map(n=>`<button class="chipsem ${n==st.sem?"on":""}" data-act="sem" data-n="${n}">Semestre ${n}</button>`).join("")}</div>`;
@@ -191,9 +204,9 @@ add(){
  return `<h2>¿Qué quieres publicar?</h2><button class="opt" data-act="go" data-v="addc">Añadir comentario</button><button class="opt" data-act="go" data-v="addq">Preguntar</button>`},
 addc(){
  st.rate=0;
- return `<h2>Añadir comentario</h2><label class="fld">Maestro<select id="ft">${TEACHERS.map((t,i)=>`<option value="${i}">${esc(t.n)} — ${esc(t.m)}</option>`).join("")}</select></label><div class="fld">Calificación<div>${[1,2,3,4,5].map(n=>`<button class="sbtn" data-act="star" data-n="${n}" aria-label="${n} de 5">✦</button>`).join("")}</div></div><label class="fld">Tu comentario<textarea id="ftx" rows="5" maxlength="600"></textarea></label><label class="fld"><input id="fan" type="checkbox" checked style="display:inline;width:auto"> Publicar como anónimo</label><button class="btn" data-act="pubc">Publicar</button> <button class="btn ghost" data-act="go" data-v="add">Cancelar</button>`},
+ return `<h2>Añadir comentario</h2><label class="fld">Maestro<select id="ft">${db.teachers.map((t,i)=>`<option value="${i}">${esc(t.n)} — ${esc(t.m)}</option>`).join("")}</select></label><div class="fld">Calificación<div>${[1,2,3,4,5].map(n=>`<button class="sbtn" data-act="star" data-n="${n}" aria-label="${n} de 5">✦</button>`).join("")}</div></div><label class="fld">Tu comentario<textarea id="ftx" rows="5" maxlength="600"></textarea></label><label class="fld"><input id="fan" type="checkbox" checked style="display:inline;width:auto"> Publicar como anónimo</label><button class="btn" data-act="pubc">Publicar</button> <button class="btn ghost" data-act="go" data-v="add">Cancelar</button>`},
 addq(){
- return `<h2>Preguntar</h2><label class="fld">¿Sobre qué maestro?<input id="ft" list="tl" placeholder="Nombre del maestro"><datalist id="tl">${TEACHERS.map(t=>`<option value="${esc(t.n)}">`).join("")}</datalist></label><label class="fld">Tu pregunta<textarea id="ftx" rows="5" maxlength="600"></textarea></label><label class="fld"><input id="fan" type="checkbox" checked style="display:inline;width:auto"> Publicar como anónimo</label><button class="btn" data-act="pubq">Publicar</button> <button class="btn ghost" data-act="go" data-v="add">Cancelar</button>`},
+ return `<h2>Preguntar</h2><label class="fld">¿Sobre qué maestro?<input id="ft" list="tl" placeholder="Nombre del maestro"><datalist id="tl">${db.teachers.map(t=>`<option value="${esc(t.n)}">`).join("")}</datalist></label><label class="fld">Tu pregunta<textarea id="ftx" rows="5" maxlength="600"></textarea></label><label class="fld"><input id="fan" type="checkbox" checked style="display:inline;width:auto"> Publicar como anónimo</label><button class="btn" data-act="pubq">Publicar</button> <button class="btn ghost" data-act="go" data-v="add">Cancelar</button>`},
 prof(){
  const u=me(),mine=db.posts.filter(p=>p.user===db.session);
  return `<h2>Mis publicaciones</h2>${mine.length?mine.map(p=>card(p,true)).join(""):'<p class="mut">Todavía no has publicado nada.</p>'}<h3>Información</h3><p><b>Nombre:</b> ${esc(u.name)}<br><b>Carrera:</b> ${esc(CAREERS.find(c=>c.id===st.career).n)}<br><b>Escuela:</b> ${esc(u.school||"Sin elegir")}</p><button class="btn ghost" data-act="logout">Cerrar sesión</button>`}
@@ -275,7 +288,7 @@ document.addEventListener("click", e => {
  case "tch": st.q=d.n; $("#q").value=d.n; st.view="home"; render(); break;
  case "star": st.rate=+d.n; document.querySelectorAll(".sbtn").forEach((s,i)=>s.classList.toggle("on",i<st.rate)); break;
  case "pubc": {
-  const t=TEACHERS[$("#ft").value], tx=$("#ftx").value.trim();
+  const t=db.teachers[$("#ft").value], tx=$("#ftx").value.trim();
   if(!st.rate) return toast("Elige una calificación");
   if(tx.length<3) return toast("Escribe tu comentario");
   addPost({type:"c", teacher:t.n, materia:t.m, rating:st.rate, text:tx, anon:$("#fan").checked});
@@ -285,7 +298,14 @@ document.addEventListener("click", e => {
   const n=$("#ft").value.trim(), tx=$("#ftx").value.trim();
   if(!n) return toast("Escribe el nombre del maestro");
   if(tx.length<3) return toast("Escribe tu pregunta");
-  const t=TEACHERS.find(x=>x.n.toLowerCase()===n.toLowerCase());
+  
+  const t=db.teachers.find(x=>x.n.toLowerCase()===n.toLowerCase());
+  
+  // ¡MAGIA!: Si el usuario pregunta por un maestro que no existe, lo agregamos a Firebase
+  if(!t) {
+      addDoc(collection(dbFS, "teachers"), { n: n, m: "Sin materia asignada" });
+  }
+  
   addPost({type:"q", teacher:t?t.n:n, materia:t?t.m:"", text:tx, anon:$("#fan").checked});
   break;
  }
