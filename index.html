@@ -136,7 +136,6 @@ inf:{
 
 const ALLM=[...new Set(Object.values(PLANS).flatMap(p=>Object.values(p).flat()))];
 
-// Añadimos teachers al objeto db
 let db = { users: {}, posts: [], teachers: [], session: localStorage.getItem("sesion_activa") || null };
 const st={view:"home",sem:1,school:"CUCEI",career:"comp",q:"",fm:"",fr:0,rate:0};
 const $=s=>document.querySelector(s);
@@ -165,13 +164,12 @@ onSnapshot(collection(dbFS, "posts"), (snapshot) => {
 onSnapshot(collection(dbFS, "teachers"), (snapshot) => {
     db.teachers = [];
     snapshot.forEach(doc => { db.teachers.push({ id: doc.id, ...doc.data() }); });
-    db.teachers.sort((a,b) => a.n.localeCompare(b.n)); // Orden alfabético
+    db.teachers.sort((a,b) => a.n.localeCompare(b.n));
     if($("#root").querySelector(".app")) render();
 });
 
 function chip(t){const v=avg(t.n);return `<button class="chip" data-act="tch" data-n="${esc(t.n)}">${esc(t.n)}<br><span class="stars">${v.n?"✦ "+v.a.toFixed(1)+" ("+v.n+")":"Sin calificar"}</span></button>`}
 
-// Modificamos mat() para leer de db.teachers
 function mat(m,empty){
     const ts=db.teachers.filter(t=>t.m===m);
     if(!ts.length&&!empty)return"";
@@ -201,12 +199,14 @@ car(){
 sch(){
  return `<h2>Centro universitario</h2>${SCHOOLS.map(s=>pill(s.id===st.school,"school",s.id,s.id,esc(s.n)+"<br>"+esc(s.d))).join("")}${st.school!=="CUCEI"?'<p class="mut">Este centro aún no tiene información; por ahora solo CUCEI.</p>':""}`},
 add(){
- return `<h2>¿Qué quieres publicar?</h2><button class="opt" data-act="go" data-v="addc">Añadir comentario</button><button class="opt" data-act="go" data-v="addq">Preguntar</button>`},
+ return `<h2>¿Qué quieres hacer?</h2><button class="opt" data-act="go" data-v="addc">Añadir comentario</button><button class="opt" data-act="go" data-v="addq">Preguntar</button><button class="opt" data-act="go" data-v="addt">Añadir maestro</button>`},
 addc(){
  st.rate=0;
  return `<h2>Añadir comentario</h2><label class="fld">Maestro<select id="ft">${db.teachers.map((t,i)=>`<option value="${i}">${esc(t.n)} — ${esc(t.m)}</option>`).join("")}</select></label><div class="fld">Calificación<div>${[1,2,3,4,5].map(n=>`<button class="sbtn" data-act="star" data-n="${n}" aria-label="${n} de 5">✦</button>`).join("")}</div></div><label class="fld">Tu comentario<textarea id="ftx" rows="5" maxlength="600"></textarea></label><label class="fld"><input id="fan" type="checkbox" checked style="display:inline;width:auto"> Publicar como anónimo</label><button class="btn" data-act="pubc">Publicar</button> <button class="btn ghost" data-act="go" data-v="add">Cancelar</button>`},
 addq(){
  return `<h2>Preguntar</h2><label class="fld">¿Sobre qué maestro?<input id="ft" list="tl" placeholder="Nombre del maestro"><datalist id="tl">${db.teachers.map(t=>`<option value="${esc(t.n)}">`).join("")}</datalist></label><label class="fld">Tu pregunta<textarea id="ftx" rows="5" maxlength="600"></textarea></label><label class="fld"><input id="fan" type="checkbox" checked style="display:inline;width:auto"> Publicar como anónimo</label><button class="btn" data-act="pubq">Publicar</button> <button class="btn ghost" data-act="go" data-v="add">Cancelar</button>`},
+addt(){
+ return `<h2>Añadir maestro</h2><label class="fld">Nombre del maestro<input id="at_n" placeholder="Ej. Juan Pérez"></label><label class="fld">Materia que imparte<input id="at_m" list="ml" placeholder="Ej. Programación Estructurada"><datalist id="ml">${ALLM.map(m=>`<option value="${esc(m)}">`).join("")}</datalist></label><label class="fld">Centro universitario<select id="at_s">${SCHOOLS.map(s=>`<option value="${s.id}" ${s.id===st.school?"selected":""}>${s.id} · ${esc(s.n)}</option>`).join("")}</select></label><button class="btn" data-act="pubt">Guardar maestro</button> <button class="btn ghost" data-act="go" data-v="add">Cancelar</button>`},
 prof(){
  const u=me(),mine=db.posts.filter(p=>p.user===db.session);
  return `<h2>Mis publicaciones</h2>${mine.length?mine.map(p=>card(p,true)).join(""):'<p class="mut">Todavía no has publicado nada.</p>'}<h3>Información</h3><p><b>Nombre:</b> ${esc(u.name)}<br><b>Carrera:</b> ${esc(CAREERS.find(c=>c.id===st.career).n)}<br><b>Escuela:</b> ${esc(u.school||"Sin elegir")}</p><button class="btn ghost" data-act="logout">Cerrar sesión</button>`}
@@ -301,12 +301,29 @@ document.addEventListener("click", e => {
   
   const t=db.teachers.find(x=>x.n.toLowerCase()===n.toLowerCase());
   
-  // ¡MAGIA!: Si el usuario pregunta por un maestro que no existe, lo agregamos a Firebase
   if(!t) {
-      addDoc(collection(dbFS, "teachers"), { n: n, m: "Sin materia asignada" });
+      addDoc(collection(dbFS, "teachers"), { n: n, m: "Sin materia asignada", school: st.school });
   }
   
   addPost({type:"q", teacher:t?t.n:n, materia:t?t.m:"", text:tx, anon:$("#fan").checked});
+  break;
+ }
+ case "pubt": {
+  const n = $("#at_n").value.trim();
+  const m = $("#at_m").value.trim();
+  const s = $("#at_s").value;
+  if(!n) return toast("Escribe el nombre del maestro");
+  if(!m) return toast("Escribe la materia");
+  if(!s) return toast("Selecciona el centro universitario");
+
+  addDoc(collection(dbFS, "teachers"), { n: n, m: m, school: s }).then(() => {
+    toast("Maestro guardado en Firebase");
+    st.view = "mat";
+    render();
+  }).catch(err => {
+    console.error("Error al registrar maestro:", err);
+    toast("Error al guardar maestro");
+  });
   break;
  }
  case "del": {
