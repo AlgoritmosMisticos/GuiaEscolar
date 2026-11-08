@@ -102,7 +102,6 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const dbFS = getFirestore(app);
 
-const K="buscar_maestro_v1";
 const SCHOOLS=[
 {id:"CUAAD",n:"Centro Universitario de Arte, Arquitectura y Diseño",d:"Artes, arquitectura, diseño gráfico e interiorismo"},
 {id:"CUCBA",n:"Centro Universitario de Ciencias Biológicas y Agropecuarias",d:"Biología, agronomía, veterinaria y medio ambiente"},
@@ -144,15 +143,14 @@ const me=()=>db.users[db.session];
 const stars=n=>"✦".repeat(n)+"✧".repeat(5-n);
 const plan=()=>st.school==="CUCEI"?PLANS[st.career]:null;
 function avg(name){const r=db.posts.filter(p=>p.type==="c"&&p.teacher===name);return{n:r.length,a:r.length?r.reduce((s,p)=>s+p.rating,0)/r.length:0}}
-function toast(t){const d=document.createElement("div");d.className="toast";d.textContent=t;document.body.appendChild(d);setTimeout(()=>d.remove(),2200)}
+function toast(t){const d=document.createElement("div");d.className="toast";d.textContent=t;document.body.appendChild(d);setTimeout(()=>d.remove(),2500)}
 
-// Sincronizar usuarios
+// Escuchar cambios en Firestore
 onSnapshot(collection(dbFS, "users"), (snapshot) => {
     snapshot.forEach(doc => { db.users[doc.id] = doc.data(); });
     if(db.session && me() && st.view === "home" && !$("#side")) enter();
 });
 
-// Sincronizar publicaciones
 onSnapshot(collection(dbFS, "posts"), (snapshot) => {
     db.posts = [];
     snapshot.forEach(doc => { db.posts.push({ id: doc.id, ...doc.data() }); });
@@ -160,7 +158,6 @@ onSnapshot(collection(dbFS, "posts"), (snapshot) => {
     if($("#root").querySelector(".app")) render();
 });
 
-// Sincronizar MAESTROS desde Firebase
 onSnapshot(collection(dbFS, "teachers"), (snapshot) => {
     db.teachers = [];
     snapshot.forEach(doc => { db.teachers.push({ id: doc.id, ...doc.data() }); });
@@ -168,16 +165,18 @@ onSnapshot(collection(dbFS, "teachers"), (snapshot) => {
     if($("#root").querySelector(".app")) render();
 });
 
-function chip(t){const v=avg(t.n);return `<button class="chip" data-act="tch" data-n="${esc(t.n)}">${esc(t.n)}<br><span class="stars">${v.n?"✦ "+v.a.toFixed(1)+" ("+v.n+")":"Sin calificar"}</span></button>`}
+function chip(t){
+    const v=avg(t.n);
+    return `<button class="chip" data-act="tch" data-n="${esc(t.n)}">${esc(t.n)}<br><small style="color:var(--muted)">${esc(t.school||'CUCEI')}</small><br><span class="stars">${v.n?"✦ "+v.a.toFixed(1)+" ("+v.n+")":"Sin calificar"}</span></button>`;
+}
 
 function mat(m,empty){
-    const ts=db.teachers.filter(t=>t.m===m);
+    const ts=db.teachers.filter(t=>t.m===m && (t.school ? t.school===st.school : st.school==="CUCEI"));
     if(!ts.length&&!empty)return"";
-    return `<div class="mat"><b>${esc(m)}</b><div>${ts.length?ts.map(chip).join(""):'<span class="mut">Sin maestros registrados</span>'}</div></div>`
+    return `<div class="mat"><b>${esc(m)}</b><div>${ts.length?ts.map(chip).join(""):'<span class="mut">Sin maestros registrados</span>'}</div></div>`;
 }
 
 function card(p,mine){return `<article class="card post"><div class="av">☺</div><div><b>${p.anon?"Anónimo":esc(p.user)}</b> <span class="mut">${esc(p.date)}</span><div class="tch">${esc(p.teacher)}${p.materia?" · "+esc(p.materia):""}</div>${p.type==="c"?`<div class="stars">${stars(p.rating)}</div>`:'<span class="tag">Pregunta</span>'}<p>${esc(p.text)}</p>${mine?`<button class="btn ghost sm" data-act="del" data-id="${p.id}">Eliminar</button>`:""}</div></article>`}
-const noData=()=>`<h2>Sin información</h2><p class="mut">Todavía no hay datos de este centro universitario. Por ahora solo está disponible CUCEI, con Ingeniería en Computación e Ingeniería Informática.</p>`;
 const semChips=P=>`<div>${Object.keys(P).map(n=>`<button class="chipsem ${n==st.sem?"on":""}" data-act="sem" data-n="${n}">Semestre ${n}</button>`).join("")}</div>`;
 const pill=(on,act,id,title,sub)=>`<button class="item ${on?"on":""}" data-act="${act}" data-id="${id}">${on?'<span class="st">✦</span>':""}<span>${title}${sub?`<small>${sub}</small>`:""}</span></button>`;
 
@@ -186,27 +185,49 @@ home(){
  const q=st.q.trim().toLowerCase();
  const l=db.posts.filter(p=>(!q||(p.teacher+" "+p.materia+" "+p.text).toLowerCase().includes(q))&&(!st.fm||p.materia===st.fm)&&(!st.fr||avg(p.teacher).a>=st.fr));
  return `<h2>Comentarios</h2>`+(l.length?l.map(p=>card(p, p.user===db.session)).join(""):`<p class="mut">${db.posts.length?"Ningún comentario coincide con tu búsqueda o filtro.":"Aún no hay comentarios. Entra a Añadir y publica el primero."}</p>`)},
+
 sem(){
- const P=plan();if(!P)return noData();
+ const P=plan();
+ if(!P) {
+    const schoolTeachers = db.teachers.filter(t=>t.school===st.school);
+    return `<h2>Maestros de ${esc(st.school)}</h2>${schoolTeachers.length? schoolTeachers.map(chip).join("") : '<p class="mut">Aún no hay maestros registrados para este centro. ¡Sé el primero en agregar uno en la sección Añadir!</p>'}`;
+ }
  const rows=P[st.sem].map(m=>mat(m,false)).join("");
- return `<h2>Semestre</h2><div class="grid9">${Object.keys(P).map(n=>`<button class="num ${n==st.sem?"on":""}" data-act="sem" data-n="${n}">${n}</button>`).join("")}</div><h3>Maestros del semestre ${st.sem}</h3>${rows||'<p class="mut">Aún no hay maestros registrados en este semestre.</p>'}`},
+ return `<h2>Semestre (${esc(st.school)})</h2><div class="grid9">${Object.keys(P).map(n=>`<button class="num ${n==st.sem?"on":""}" data-act="sem" data-n="${n}">${n}</button>`).join("")}</div><h3>Maestros del semestre ${st.sem}</h3>${rows||'<p class="mut">Aún no hay maestros registrados en este semestre.</p>'}`},
+
 mat(){
- const P=plan();if(!P)return noData();
- return `<h2>Materia</h2>${semChips(P)}${P[st.sem].map(m=>mat(m,true)).join("")}`},
+ const P=plan();
+ const schoolTeachers = db.teachers.filter(t=> (t.school ? t.school===st.school : st.school==="CUCEI"));
+ const extraMaterias = [...new Set(schoolTeachers.map(t=>t.m))];
+
+ if(!P) {
+    return `<h2>Materias en ${esc(st.school)}</h2>${extraMaterias.length ? extraMaterias.map(m=>mat(m,true)).join("") : '<p class="mut">Aún no hay materias o maestros registrados para este centro universitario.</p>'}`;
+ }
+
+ const allMaterias = [...new Set([...P[st.sem], ...extraMaterias])];
+ return `<h2>Materia (${esc(st.school)})</h2>${semChips(P)}${allMaterias.map(m=>mat(m,true)).join("")}`;
+},
+
 car(){
- if(st.school!=="CUCEI")return `<h2>Carrera</h2><p class="mut">Aún no hay carreras cargadas para ${esc(st.school)}.</p>`;
- return `<h2>Carrera</h2>${CAREERS.map(c=>pill(c.id===st.career,"career",c.id,c.n)).join("")}<p class="mut">Se irán añadiendo más carreras.</p>`},
+ if(st.school!=="CUCEI")return `<h2>Carrera</h2><p class="mut">Aún no hay carreras estructuradas para ${esc(st.school)}. Sin embargo, ya puedes añadir maestros a este centro.</p>`;
+ return `<h2>Carrera</h2>${CAREERS.map(c=>pill(c.id===st.career,"career",c.id,c.n)).join("")}`},
+
 sch(){
- return `<h2>Centro universitario</h2>${SCHOOLS.map(s=>pill(s.id===st.school,"school",s.id,s.id,esc(s.n)+"<br>"+esc(s.d))).join("")}${st.school!=="CUCEI"?'<p class="mut">Este centro aún no tiene información; por ahora solo CUCEI.</p>':""}`},
+ return `<h2>Centro universitario</h2>${SCHOOLS.map(s=>pill(s.id===st.school,"school",s.id,s.id,esc(s.n)+"<br>"+esc(s.d))).join("")}`},
+
 add(){
  return `<h2>¿Qué quieres hacer?</h2><button class="opt" data-act="go" data-v="addc">Añadir comentario</button><button class="opt" data-act="go" data-v="addq">Preguntar</button><button class="opt" data-act="go" data-v="addt">Añadir maestro</button>`},
+
 addc(){
  st.rate=0;
- return `<h2>Añadir comentario</h2><label class="fld">Maestro<select id="ft">${db.teachers.map((t,i)=>`<option value="${i}">${esc(t.n)} — ${esc(t.m)}</option>`).join("")}</select></label><div class="fld">Calificación<div>${[1,2,3,4,5].map(n=>`<button class="sbtn" data-act="star" data-n="${n}" aria-label="${n} de 5">✦</button>`).join("")}</div></div><label class="fld">Tu comentario<textarea id="ftx" rows="5" maxlength="600"></textarea></label><label class="fld"><input id="fan" type="checkbox" checked style="display:inline;width:auto"> Publicar como anónimo</label><button class="btn" data-act="pubc">Publicar</button> <button class="btn ghost" data-act="go" data-v="add">Cancelar</button>`},
+ return `<h2>Añadir comentario</h2><label class="fld">Maestro<select id="ft">${db.teachers.map((t,i)=>`<option value="${i}">${esc(t.n)} — ${esc(t.m)} (${esc(t.school||'CUCEI')})</option>`).join("")}</select></label><div class="fld">Calificación<div>${[1,2,3,4,5].map(n=>`<button class="sbtn" data-act="star" data-n="${n}" aria-label="${n} de 5">✦</button>`).join("")}</div></div><label class="fld">Tu comentario<textarea id="ftx" rows="5" maxlength="600"></textarea></label><label class="fld"><input id="fan" type="checkbox" checked style="display:inline;width:auto"> Publicar como anónimo</label><button class="btn" data-act="pubc">Publicar</button> <button class="btn ghost" data-act="go" data-v="add">Cancelar</button>`},
+
 addq(){
  return `<h2>Preguntar</h2><label class="fld">¿Sobre qué maestro?<input id="ft" list="tl" placeholder="Nombre del maestro"><datalist id="tl">${db.teachers.map(t=>`<option value="${esc(t.n)}">`).join("")}</datalist></label><label class="fld">Tu pregunta<textarea id="ftx" rows="5" maxlength="600"></textarea></label><label class="fld"><input id="fan" type="checkbox" checked style="display:inline;width:auto"> Publicar como anónimo</label><button class="btn" data-act="pubq">Publicar</button> <button class="btn ghost" data-act="go" data-v="add">Cancelar</button>`},
+
 addt(){
  return `<h2>Añadir maestro</h2><label class="fld">Nombre del maestro<input id="at_n" placeholder="Ej. Juan Pérez"></label><label class="fld">Materia que imparte<input id="at_m" list="ml" placeholder="Ej. Programación Estructurada"><datalist id="ml">${ALLM.map(m=>`<option value="${esc(m)}">`).join("")}</datalist></label><label class="fld">Centro universitario<select id="at_s">${SCHOOLS.map(s=>`<option value="${s.id}" ${s.id===st.school?"selected":""}>${s.id} · ${esc(s.n)}</option>`).join("")}</select></label><button class="btn" data-act="pubt">Guardar maestro</button> <button class="btn ghost" data-act="go" data-v="add">Cancelar</button>`},
+
 prof(){
  const u=me(),mine=db.posts.filter(p=>p.user===db.session);
  return `<h2>Mis publicaciones</h2>${mine.length?mine.map(p=>card(p,true)).join(""):'<p class="mut">Todavía no has publicado nada.</p>'}<h3>Información</h3><p><b>Nombre:</b> ${esc(u.name)}<br><b>Carrera:</b> ${esc(CAREERS.find(c=>c.id===st.career).n)}<br><b>Escuela:</b> ${esc(u.school||"Sin elegir")}</p><button class="btn ghost" data-act="logout">Cerrar sesión</button>`}
@@ -218,13 +239,16 @@ function render(){
  $("#side").innerHTML=[["sem","Semestre"],["mat","Materia"],["car","Carrera"],["sch",st.school],["add","Añadir"],["prof","Perfil"]].map(([v,l])=>`<button class="${nav===v?"on":""}" data-act="go" data-v="${v}">${l}</button>`).join("");
  $("#main").innerHTML=`<div class="wrap">${views[st.view]()}</div>`;
 }
+
 function shell(){
  $("#root").innerHTML=`<div class="app"><button class="logo" data-act="go" data-v="home" title="Inicio" aria-label="Inicio"><svg viewBox="0 0 40 40"><circle cx="20" cy="20" r="18" fill="#2D1036" stroke="#6850AD" stroke-width="2"/><circle cx="20" cy="15" r="5" fill="none" stroke="#D97352" stroke-width="2"/><path d="M10 31c2-7 18-7 20 0" fill="none" stroke="#D97352" stroke-width="2"/></svg><span class="bn">Buscar Maestro</span></button><div class="top"><input id="q" placeholder="Buscar maestro" aria-label="Buscar maestro"><button class="fbtn" data-act="filt">Filtro</button></div><nav class="side" id="side"></nav><main id="main"></main><div class="filt" id="filt" hidden><label>Materia<select id="fm"><option value="">Todas</option>${ALLM.map(m=>`<option>${esc(m)}</option>`).join("")}</select></label><label>Calificación mínima del maestro<select id="fr"><option value="0">Cualquiera</option>${[1,2,3,4,5].map(n=>`<option value="${n}">${n} ✦ o más</option>`).join("")}</select></label><button class="btn sm" data-act="fclear">Quitar filtros</button></div></div>`;
  render();
 }
+
 function auth(mode){
  $("#root").innerHTML=`<div class="auth"><div class="box"><h1>${mode==="in"?"Inicia sesión":"Crear cuenta"}</h1><div class="tabs"><button class="${mode==="in"?"on":""}" data-act="amode" data-m="in">Inicia sesión</button><button class="${mode==="up"?"on":""}" data-act="amode" data-m="up">Crear cuenta</button></div><label>Nombre de usuario<input id="au" autocomplete="username"></label>${mode==="up"?`<label>Escoger escuela (opcional)<select id="as"><option value="">Sin elegir</option>${SCHOOLS.map(s=>`<option value="${s.id}">${s.id} · ${esc(s.n)}</option>`).join("")}</select></label>`:""}<label>Contraseña<input id="ap" type="password" autocomplete="${mode==="in"?"current-password":"new-password"}"></label><button class="btn" data-act="${mode==="in"?"login":"signup"}">${mode==="in"?"Entrar":"Crear cuenta"}</button><p class="err" id="err" role="alert"></p></div></div>`;
 }
+
 function enter(){const u=me();if(!u)return; st.school=SCHOOLS.some(s=>s.id===u.school)?u.school:"CUCEI";st.view="home";st.q="";st.fm="";st.fr=0;shell()}
 const err=t=>{$("#err").textContent=t};
 
@@ -237,13 +261,12 @@ async function addPost(o) {
     }, o);
     
     await addDoc(collection(dbFS, "posts"), postData);
-    
     st.view = "home";
     render();
     toast("Publicado en la nube");
   } catch (error) {
     console.error("Error al publicar:", error);
-    toast("Error al guardar");
+    toast("Error de permisos en Firebase");
   }
 }
 
@@ -262,7 +285,7 @@ document.addEventListener("click", e => {
     db.session = k;
     localStorage.setItem("sesion_activa", k);
     enter();
-  });
+  }).catch(e => { err("Error al crear usuario en Firebase: " + e.message); });
   break;
  }
  case "login": {
@@ -289,6 +312,7 @@ document.addEventListener("click", e => {
  case "star": st.rate=+d.n; document.querySelectorAll(".sbtn").forEach((s,i)=>s.classList.toggle("on",i<st.rate)); break;
  case "pubc": {
   const t=db.teachers[$("#ft").value], tx=$("#ftx").value.trim();
+  if(!t) return toast("Selecciona un maestro válido");
   if(!st.rate) return toast("Elige una calificación");
   if(tx.length<3) return toast("Escribe tu comentario");
   addPost({type:"c", teacher:t.n, materia:t.m, rating:st.rate, text:tx, anon:$("#fan").checked});
@@ -317,12 +341,13 @@ document.addEventListener("click", e => {
   if(!s) return toast("Selecciona el centro universitario");
 
   addDoc(collection(dbFS, "teachers"), { n: n, m: m, school: s }).then(() => {
-    toast("Maestro guardado en Firebase");
+    toast("¡Maestro guardado con éxito!");
+    st.school = s;
     st.view = "mat";
     render();
   }).catch(err => {
     console.error("Error al registrar maestro:", err);
-    toast("Error al guardar maestro");
+    toast("Error de permisos en Firebase. Revisa la consola F12.");
   });
   break;
  }
@@ -334,6 +359,7 @@ document.addEventListener("click", e => {
  }
  }
 });
+
 document.addEventListener("input",e=>{
  if(e.target.id==="q"){st.q=e.target.value;st.view="home";render()}
 });
