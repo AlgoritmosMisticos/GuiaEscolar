@@ -110,7 +110,37 @@ const SCHOOLS=[
 {id:"CUCS",n:"Centro Universitario de Ciencias de la Salud",d:"Medicina, enfermería, odontología, psicología y nutrición"},
 {id:"CUCSH",n:"Centro Universitario de Ciencias Sociales y Humanidades",d:"Derecho, historia, filosofía, letras, sociología y relaciones internacionales"},
 {id:"CUGDL",n:"Centro Universitario de Guadalajara",d:"Centro multidisciplinario con oferta flexible y modalidad híbrida"}];
-const CAREERS=[{id:"comp",n:"Ingeniería en Computación"},{id:"inf",n:"Ingeniería Informática"}];
+const CAREERS = [
+  { id: "comp", n: "Ingeniería en Computación", school: "CUCEI" },
+  { id: "inf", n: "Ingeniería Informática", school: "CUCEI" },
+  { id: "ind", n: "Ingeniería Industrial y de Sistemas", school: "CUCEI" },
+  { id: "eco", n: "Ingeniería Económica", school: "CUCEI" },
+  { id: "mec", n: "Ingeniería Mecánica Eléctrica", school: "CUCEI" },
+  { id: "arq", n: "Arquitectura", school: "CUAAD" },
+  { id: "dis", n: "Diseño Gráfico", school: "CUAAD" },
+  { id: "art", n: "Artes Visuales", school: "CUAAD" },
+  { id: "amb", n: "Diseño de Interiores y Ambientación", school: "CUAAD" },
+  { id: "bio", n: "Biología", school: "CUCBA" },
+  { id: "agr", n: "Agronomía", school: "CUCBA" },
+  { id: "vet", n: "Medicina Veterinaria y Zootecnia", school: "CUCBA" },
+  { id: "ali", n: "Ciencia de los Alimentos", school: "CUCBA" },
+  { id: "adm", n: "Administración", school: "CUCEA" },
+  { id: "con", n: "Contaduría Pública", school: "CUCEA" },
+  { id: "econ", n: "Economía", school: "CUCEA" },
+  { id: "neg", n: "Negocios Internacionales", school: "CUCEA" },
+  { id: "med", n: "Médico Cirujano y Partero", school: "CUCS" },
+  { id: "enf", n: "Enfermería", school: "CUCS" },
+  { id: "psi", n: "Psicología", school: "CUCS" },
+  { id: "nut", n: "Nutrición", school: "CUCS" },
+  { id: "der", n: "Derecho", school: "CUCSH" },
+  { id: "rel", n: "Relaciones Internacionales", school: "CUCSH" },
+  { id: "his", n: "Historia", school: "CUCSH" },
+  { id: "soc", n: "Sociología", school: "CUCSH" },
+  { id: "inn", n: "Innovación y Desarrollo Multidisciplinario", school: "CUGDL" },
+  { id: "tih", n: "Tecnologías de la Información Híbridas", school: "CUGDL" },
+  { id: "ges", n: "Gestión y Administración de Negocios Digitales", school: "CUGDL" },
+  { id: "est", n: "Estudios Socio-Territoriales y Sustentabilidad", school: "CUGDL" }
+];
 const PLANS={
 comp:{
 1:["Fundamentos de Programación","Lógica Matemática","Precálculo","Fundamentos de Física","Introducción a la Ingeniería","Ética y Legislación","Análisis de Problemas Globales del Siglo XXI"],
@@ -215,8 +245,11 @@ mat(){
 },
 
 car(){
- if(st.school!=="CUCEI")return `<h2>Carrera</h2><p class="mut">Aún no hay carreras estructuradas para ${esc(st.school)}. Sin embargo, ya puedes añadir maestros a este centro.</p>`;
- return `<h2>Carrera</h2>${CAREERS.map(c=>pill(c.id===st.career,"career",c.id,c.n)).join("")}`},
+  const carrerasDelCentro = CAREERS.filter(c => c.school === st.school);
+  if(!carrerasDelCentro.length) return `<h2>Carrera</h2><p class="mut">Aún no hay carreras estructuradas para ${esc(st.school)}.</p>`;
+  
+  return `<h2>Carrera</h2>${carrerasDelCentro.map(c=>pill(c.id===st.career,"career",c.id,c.n)).join("")}`;
+},
 
 sch(){
  return `<h2>Centro universitario</h2>${SCHOOLS.map(s=>pill(s.id===st.school,"school",s.id,s.id,esc(s.n)+"<br>"+esc(s.d))).join("")}`},
@@ -236,7 +269,9 @@ addt(){
 
 prof(){
  const u=me(),mine=db.posts.filter(p=>p.user===db.session);
- return `<h2>Mis publicaciones</h2>${mine.length?mine.map(p=>card(p,true)).join(""):'<p class="mut">Todavía no has publicado nada.</p>'}<h3>Información</h3><p><b>Nombre:</b> ${esc(u.name)}<br><b>Carrera:</b> ${esc(CAREERS.find(c=>c.id===st.career).n)}<br><b>Escuela:</b> ${esc(u.school||"Sin elegir")}</p><button class="btn ghost" data-act="logout">Cerrar sesión</button>`}
+ const userCareer = CAREERS.find(c=>c.id===st.career);
+ return `<h2>Mis publicaciones</h2>${mine.length?mine.map(p=>card(p,true)).join(""):'<p class="mut">Todavía no has publicado nada.</p>'}<h3>Información</h3><p><b>Nombre:</b> ${esc(u.name)}<br><b>Carrera:</b> ${userCareer ? esc(userCareer.n) : "Sin elegir"}<br><b>Escuela:</b> ${esc(u.school||"Sin elegir")}</p><button class="btn ghost" data-act="logout">Cerrar sesión</button>`
+}
 };
 
 function render(){
