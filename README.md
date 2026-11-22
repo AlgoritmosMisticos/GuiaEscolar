@@ -34,10 +34,3 @@ Como parte del proyecto de **Análisis de Algoritmos (2026B)**, se evaluaron y o
 
 ---
 
-## Estructura del Proyecto
-
-```text
-/
-├── index.html          # Aplicación principal con integración a Firebase Firestore
-├── Buscar Maestro.html # Prototipo base con almacenamiento local (localStorage)
-└── README.md           # Documentación general del repositorio
