@@ -160,7 +160,11 @@ onSnapshot(collection(dbFS, "posts"), (snapshot) => {
 
 onSnapshot(collection(dbFS, "teachers"), (snapshot) => {
     db.teachers = [];
-    snapshot.forEach(doc => { db.teachers.push({ id: doc.id, ...doc.data() }); });
+    snapshot.forEach(doc => { 
+        let data = doc.data();
+        data.school = data.school || data.c || "CUCEI"; 
+        db.teachers.push({ id: doc.id, ...data }); 
+    });
     db.teachers.sort((a,b) => a.n.localeCompare(b.n));
     if($("#root").querySelector(".app")) render();
 });
