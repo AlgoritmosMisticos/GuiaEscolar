@@ -2,7 +2,7 @@
 
 Plataforma web interactiva diseñada para que estudiantes de la **Universidad de Guadalajara** (con enfoque inicial en el Centro Universitario de Ciencias Exactas e Ingenierías — **CUCEI**) consulten, califiquen y publiquen opiniones y preguntas sobre el personal docente, organizadas por centro universitario, carrera, semestre y materia.
 
-**Demo en vivo:** [[          ](https://algoritmosmisticos.github.io/GuiaEscolar/)]
+**Demo en vivo:** [[https://algoritmosmisticos.github.io/GuiaEscolar](https://algoritmosmisticos.github.io/GuiaEscolar/)]
 
 ---
 
